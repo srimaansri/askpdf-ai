@@ -1,0 +1,49 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 40px auto;
+  padding: 20px;
+  max-width: 600px;
+  background-color: #f8f9fa;
+  color: #333;
+}
+
+h1 {
+  text-align: center;
+  color: #0056b3;
+}
+
+#chat-box {
+  border: 1px solid #ccc;
+  padding: 15px;
+  margin: 20px 0;
+  height: 300px;
+  overflow-y: auto;
+  background: #fff;
+}
+
+form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+input[type="text"],
+input[type="file"] {
+  flex: 1;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+button {
+  padding: 10px 15px;
+  background-color: #0056b3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #003f88;
+}
