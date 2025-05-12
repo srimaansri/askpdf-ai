@@ -38,24 +38,37 @@ h1 {
   color: var(--button-bg);
 }
 
-/* ── Header ── */
+/* Remove any absolute positioning you previously had on header/h1/.toggle-container */
+
 header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
+  align-items: center;          /* vertically center everything */
+  justify-content: space-between;/* push title to center, toggle to right */
+  width: 100%;
+  max-width: 700px;
+  margin: 2rem auto 1rem;
+  padding: 0 1rem;
 }
+
 header h1 {
-  margin: 0 auto;
+  margin: 0;                    /* no extra margins */
+  font-size: 2.25rem;
+  color: var(--button-bg);
 }
+
 .toggle-container {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.5rem;
+}
+
+.toggle-container .label-text {
   font-size: 0.9rem;
   color: var(--text-color);
 }
+
+/* (Keep your existing .toggle-switch styles below) */
+
 
 /* ── Toggle Switch ── */
 .toggle-switch {
