@@ -3,159 +3,111 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>PDF Chatbot</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: 'Inter', sans-serif;
-      background-color: #f5f7fa;
-      padding: 2rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      color: #333;
-    }
-
-    h1 {
-      font-size: 2rem;
-      font-weight: 600;
-      margin-bottom: 2rem;
-      color: #2c3e50;
-    }
-
-    .container {
-      background: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-      width: 90%;
-      max-width: 700px;
-      padding: 1.5rem 2rem;
-    }
-
-    form {
-      margin-bottom: 1rem;
-      display: flex;
-      justify-content: center;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-    }
-
-    input[type="file"],
-    input[type="text"] {
-      padding: 0.5rem;
-      font-size: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      flex-grow: 1;
-    }
-
-    button {
-      background-color: #2d72d9;
-      color: white;
-      padding: 0.5rem 1rem;
-      font-weight: 600;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #225caa;
-    }
-
-    #chat-box {
-      background-color: #f0f2f5;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 1rem;
-      height: 320px;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      margin-bottom: 1rem;
-    }
-
-    #chat-box p {
-      margin-bottom: 0.75rem;
-    }
-
-    .user {
-      font-weight: bold;
-      color: #2c3e50;
-    }
-
-    .bot {
-      margin-left: 1rem;
-      color: #444;
-    }
-
-    @media (max-width: 500px) {
-      input[type="text"] {
-        width: 100%;
-      }
-
-      .container {
-        padding: 1rem;
-      }
-    }
-  </style>
+  <title>AskPDF.ai</title>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <h1>PDF Chatbot</h1>
+  <header>
+  <h1>AskPDF.ai</h1>
+  <div class="toggle-container">
+    <label class="toggle-switch">
+      <span class="icon">🌞</span>
+      <input type="checkbox" id="theme-toggle" />
+      <span class="icon">🌙</span>
+    </label>
+    <span class="label-text">Dark Mode</span>
+  </div>
+</header>
+
   <div class="container">
+    <!-- PDF upload form -->
     <form id="upload-form" enctype="multipart/form-data">
       <input type="file" name="pdf" accept=".pdf" required />
       <button type="submit">Upload PDF</button>
     </form>
+    <div id="upload-loader" class="loader">Uploading PDF…</div>
 
+    <!-- Chat history -->
     <div id="chat-box"></div>
+    <div id="chat-loader" class="loader">Bot is thinking…</div>
 
+    <!-- Chat input form -->
     <form id="chat-form">
       <input type="text" id="message" placeholder="Ask something..." required />
       <button type="submit">Send</button>
     </form>
   </div>
 
-  <script>
-    const chatBox = document.getElementById('chat-box');
+  <!-- Toast notification -->
+  <div id="notification" class="toast"></div>
 
-    document.getElementById('upload-form').addEventListener('submit', async (e) => {
+  <script>
+    const uploadForm   = document.getElementById('upload-form');
+    const uploadLoader = document.getElementById('upload-loader');
+    const chatForm     = document.getElementById('chat-form');
+    const chatLoader   = document.getElementById('chat-loader');
+    const chatBox      = document.getElementById('chat-box');
+    const messageInput = document.getElementById('message');
+    const notification = document.getElementById('notification');
+    const themeToggle  = document.getElementById('theme-toggle');
+
+    function showToast(msg, type='success') {
+      notification.textContent = msg;
+      notification.className = `toast show ${type}`;
+      setTimeout(() => {
+        notification.classList.remove('show', type);
+      }, 3000);
+    }
+
+    uploadForm.addEventListener('submit', async e => {
       e.preventDefault();
-      const formData = new FormData(e.target);
-      const res = await fetch('/upload', { method: 'POST', body: formData });
-      const data = await res.json();
-      alert(data.message || data.error);
+      uploadLoader.style.display = 'block';
+      try {
+        const res = await fetch('/upload', { method:'POST', body: new FormData(uploadForm) });
+        const data = await res.json();
+        if (data.message) showToast(data.message, 'success');
+        else showToast(data.error, 'error');
+      } catch {
+        showToast('Upload failed. Please try again.', 'error');
+      } finally {
+        uploadLoader.style.display = 'none';
+      }
     });
 
-    document.getElementById('chat-form').addEventListener('submit', async (e) => {
+    chatForm.addEventListener('submit', async e => {
       e.preventDefault();
-      const input = document.getElementById('message');
-      const msg = input.value.trim();
+      const msg = messageInput.value.trim();
       if (!msg) return;
-
       chatBox.innerHTML += `<p><span class="user">You:</span> ${msg}</p>`;
-      input.value = '';
-
+      messageInput.value = '';
+      chatLoader.style.display = 'block';
       try {
         const res = await fetch('/ask', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method:'POST',
+          headers:{ 'Content-Type':'application/json' },
           body: JSON.stringify({ message: msg })
         });
         const data = await res.json();
-        const response = data.response || `Error: ${data.error || 'Unknown error'}`;
-        chatBox.innerHTML += `<p><span class="bot">Bot:</span> ${response}</p>`;
-        chatBox.scrollTop = chatBox.scrollHeight;
+        if (data.response) {
+          chatBox.innerHTML += `<p><span class="bot">Bot:</span> ${data.response}</p>`;
+        } else {
+          showToast(data.error || 'Unknown error', 'error');
+        }
       } catch {
-        chatBox.innerHTML += `<p><span class="bot">Bot:</span> Failed to reach server.</p>`;
+        showToast('Failed to reach server.', 'error');
+      } finally {
+        chatLoader.style.display = 'none';
+        chatBox.scrollTop = chatBox.scrollHeight;
       }
     });
+
+    function applyTheme(dark) {
+      document.documentElement.classList.toggle('dark-theme', dark);
+      localStorage.setItem('darkMode', dark);
+      themeToggle.checked = dark;
+    }
+    themeToggle.addEventListener('change', () => applyTheme(themeToggle.checked));
+    applyTheme(localStorage.getItem('darkMode') === 'true');
   </script>
 </body>
 </html>
